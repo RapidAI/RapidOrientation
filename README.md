@@ -26,13 +26,15 @@
 
 ### 安装
 
+模型手动下载位置：[link](https://github.com/RapidAI/RapidOrientation/releases/tag/v0.0.0)
+
 由于模型较小，已经将分类模型(`rapid_orientation.onnx`)打包进了whl包内：
 
   ```bash
   pip install rapid-orientation
   ```
 
-### 脚本运行
+### Python脚本运行
 
 ```python
 import cv2
