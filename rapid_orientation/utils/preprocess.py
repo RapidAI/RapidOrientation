@@ -1,23 +1,35 @@
 # -*- encoding: utf-8 -*-
 # @Author: SWHL
 # @Contact: liekkaskono@163.com
+import copy
+import random
+
 import cv2
 import numpy as np
 
 
 class Preprocess:
-    def __init__(self):
+    def __init__(self, batch_size: int = 3):
         self.resize_img = ResizeImage(resize_short=256)
         self.crop_img = CropImage(size=224)
+        self.rand_crop = RandCropImageV2(size=224)
         self.normal_img = NormalizeImage()
         self.cvt_channel = ToCHWImage()
 
+        self.batch_size = batch_size
+
     def __call__(self, img: np.ndarray):
-        img = self.resize_img(img)
-        img = self.crop_img(img)
-        img = self.normal_img(img)
-        img = self.cvt_channel(img)
-        return img
+        ori_img = self.resize_img(img)
+
+        norm_img_batch = []
+        for _ in range(self.batch_size):
+            img = self.crop_img(copy.deepcopy(ori_img))
+            img = self.normal_img(img)
+            img = self.cvt_channel(img)
+            img = img[None, ...]
+            norm_img_batch.append(img)
+        norm_img_batch = np.concatenate(norm_img_batch).astype(np.float32)
+        return norm_img_batch
 
 
 class ResizeImage:
@@ -43,7 +55,8 @@ class ResizeImage:
             percent = float(self.resize_short) / min(img_w, img_h)
             w = int(round(img_w * percent))
             h = int(round(img_h * percent))
-        return cv2.resize(img, (w, h), interpolation=cv2.INTER_LANCZOS4)
+
+        return cv2.resize(img, dsize=(w, h), interpolation=cv2.INTER_LANCZOS4)
 
 
 class CropImage:
@@ -70,10 +83,39 @@ class CropImage:
         return img[h_start:h_end, w_start:w_end, :]
 
 
+class RandCropImageV2:
+    """RandCropImageV2 is different from RandCropImage,
+        it will Select a cutting position randomly in a uniform distribution way,
+        and cut according to the given size without resize at last.
+
+    Modified from https://github.com/PaddlePaddle/PaddleClas/blob/177e4be74639c0960efeae2c5166d3226c9a02eb/ppcls/data/preprocess/ops/operators.py#L448C1-L479C62
+
+    """
+
+    def __init__(self, size):
+        self.size = size
+        if isinstance(size, int):
+            self.size = (size, size)  # (h, w)
+
+    def __call__(self, img: np.ndarray):
+        img_h, img_w = img.shape[0], img.shape[1]
+
+        tw, th = self.size
+        if img_h + 1 < th or img_w + 1 < tw:
+            raise ValueError(
+                f"Required crop size {(th, tw)} is larger then input image size {(img_h, img_w)}"
+            )
+
+        if img_w == tw and img_h == th:
+            return img
+
+        top = random.randint(0, img_h - th + 1)
+        left = random.randint(0, img_w - tw + 1)
+        return img[top : top + th, left : left + tw, :]
+
+
 class NormalizeImage:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.scale = np.float32(1.0 / 255.0)
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]

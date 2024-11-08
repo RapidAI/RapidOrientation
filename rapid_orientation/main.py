@@ -1,16 +1,3 @@
-# Copyright (c) 2020 PaddlePaddle Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 # -*- encoding: utf-8 -*-
 # @Author: SWHL
 # @Contact: liekkaskono@163.com
@@ -44,7 +31,7 @@ class RapidOrientation:
         self.session = OrtInferSession(config)
         self.labels = self.session.get_character_list()
 
-        self.preprocess = Preprocess()
+        self.preprocess = Preprocess(batch_size=3)
         self.load_img = LoadImage()
 
     def __call__(self, img_content: Union[str, np.ndarray, bytes, Path]):
@@ -53,13 +40,11 @@ class RapidOrientation:
         s = time.perf_counter()
 
         image = self.preprocess(image)
-        image = image[None, ...]
 
         pred_output = self.session(image)[0]
-
-        pred_output = pred_output.squeeze()
-        pred_idx = np.argmax(pred_output)
-        pred_txt = self.labels[pred_idx]
+        pred_idxs = list(np.argmax(pred_output, axis=1))
+        final_idx = max(set(pred_idxs), key=pred_idxs.count)
+        pred_txt = self.labels[final_idx]
 
         elapse = time.perf_counter() - s
         return pred_txt, elapse
