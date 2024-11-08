@@ -6,11 +6,3 @@ CUDAExecutionProvider:
     arena_extend_strategy: kNextPowerOfTwo
     cudnn_conv_algo_search: EXHAUSTIVE
     do_copy_in_default_stream: true
-
-PreProcess:
-    - ResizeImage:
-        resize_short: 256
-    - CropImage:
-        size: 224
-    - NormalizeImage:
-    - ToCHWImage:

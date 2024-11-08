@@ -17,53 +17,52 @@
 import argparse
 import time
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 import cv2
 import numpy as np
-import yaml
 
-from .utils import LoadImage, OrtInferSession, create_operators
+from .utils.infer_engine import OrtInferSession
+from .utils.load_image import LoadImage
+from .utils.preprocess import Preprocess
+from .utils.utils import read_yaml
 
 root_dir = Path(__file__).resolve().parent
+DEFAULT_PATH = root_dir / "models" / "rapid_orientation.onnx"
+DEFAULT_CFG = root_dir / "config.yaml"
 
 
 class RapidOrientation:
-    def __init__(self, model_path: Optional[str] = None):
-        config_path = str(root_dir / "config.yaml")
-        config = self.read_yaml(config_path)
-        if model_path is None:
-            model_path = str(root_dir / "models" / "rapid_orientation.onnx")
+    def __init__(
+        self,
+        model_path: Union[str, Path] = DEFAULT_PATH,
+        cfg_path: Union[str, Path] = DEFAULT_CFG,
+    ):
+        config = read_yaml(cfg_path)
         config["model_path"] = model_path
 
         self.session = OrtInferSession(config)
-        self.labels = self.session.get_metadata()["character"].splitlines()
+        self.labels = self.session.get_character_list()
 
-        self.preprocess_ops = create_operators(config["PreProcess"])
-
+        self.preprocess = Preprocess()
         self.load_img = LoadImage()
 
     def __call__(self, img_content: Union[str, np.ndarray, bytes, Path]):
-        images = self.load_img(img_content)
+        image = self.load_img(img_content)
 
-        s = time.time()
-        for ops in self.preprocess_ops:
-            images = ops(images)
-        image = np.array(images)[None, ...]
+        s = time.perf_counter()
+
+        image = self.preprocess(image)
+        image = image[None, ...]
 
         pred_output = self.session(image)[0]
 
         pred_output = pred_output.squeeze()
         pred_idx = np.argmax(pred_output)
         pred_txt = self.labels[pred_idx]
-        elapse = time.time() - s
-        return pred_txt, elapse
 
-    @staticmethod
-    def read_yaml(yaml_path):
-        with open(yaml_path, "rb") as f:
-            data = yaml.load(f, Loader=yaml.Loader)
-        return data
+        elapse = time.perf_counter() - s
+        return pred_txt, elapse
 
 
 def main():

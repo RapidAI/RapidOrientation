@@ -14,7 +14,6 @@ sys.path.append(str(root_dir))
 
 from rapid_orientation import RapidOrientation
 
-
 test_file_dir = cur_dir / "test_files"
 text_orientation = RapidOrientation()
 
