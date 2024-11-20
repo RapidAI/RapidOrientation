@@ -3,9 +3,19 @@
 # @Contact: liekkaskono@163.com
 import sys
 from pathlib import Path
+from typing import List
 
 import setuptools
 from get_pypi_latest_version import GetPyPiLatestVersion
+
+
+def read_txt(txt_path: str) -> List:
+    if not isinstance(txt_path, str):
+        txt_path = str(txt_path)
+
+    with open(txt_path, "r", encoding="utf-8") as f:
+        data = list(map(lambda x: x.rstrip("\n"), f))
+    return data
 
 
 def get_readme():
@@ -32,22 +42,14 @@ setuptools.setup(
     name=MODULE_NAME,
     version=VERSION_NUM,
     platforms="Any",
-    long_description=get_readme(),
-    long_description_content_type="text/markdown",
     description="Tools for classifying the direction of images containing text based ONNXRuntime.",
     author="SWHL",
     author_email="liekkaskono@163.com",
-    url="https://github.com/RapidAI/RapidStructure",
+    url="https://github.com/RapidAI/RapidOrientation",
     license="Apache-2.0",
     include_package_data=True,
-    install_requires=[
-        "onnxruntime>=1.7.0",
-        "PyYAML>=6.0",
-        "opencv_python>=4.5.1.48",
-        "numpy>=1.21.6",
-        "Pillow",
-    ],
-    packages=[MODULE_NAME, f"{MODULE_NAME}.models"],
+    install_requires=read_txt("requirements.txt"),
+    packages=[MODULE_NAME, f"{MODULE_NAME}.models", f"{MODULE_NAME}.utils"],
     package_data={"": ["*.onnx", "*.yaml"]},
     keywords=["ppstructure,layout,rapidocr,rapid_orientation"],
     classifiers=[
@@ -58,8 +60,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ],
-    python_requires=">=3.6,<3.12",
-    entry_points={
-        "console_scripts": [f"{MODULE_NAME}={MODULE_NAME}.{MODULE_NAME}:main"]
-    },
+    python_requires=">=3.6,<3.13",
+    entry_points={"console_scripts": [f"{MODULE_NAME}={MODULE_NAME}.main:main"]},
 )

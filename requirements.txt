@@ -1,12 +1,5 @@
 numpy>=1.21.6,<2.0.0
 opencv_python>=4.6.0.66
-setuptools>=61.2.0
 PyYAML
-pytest==8.1.1
-pip>=24.0
 onnxruntime
-wheel
-get_pypi_latest_version
 Pillow
-tqdm
-requests

@@ -5,7 +5,6 @@ on:
     tags:
       - v*
 
-
 env:
   RESOURCES_URL: https://github.com/RapidAI/RapidStructure/releases/download/v0.0.0/rapid_orientation_models.zip
 
@@ -31,6 +30,7 @@ jobs:
           rm rapid_orientation/models/.gitkeep
           mv $DIR_NAME/*.onnx rapid_orientation/models/
           pip install -r requirements.txt
+          pip install pytest
           pytest tests/test_orientation.py
 
   GenerateWHL_PushPyPi:
@@ -49,12 +49,14 @@ jobs:
       - name: Run setup
         run: |
           pip install -r requirements.txt
+          python -m pip install --upgrade pip
+          pip install wheel get_pypi_latest_version
           wget $RESOURCES_URL
           ZIP_NAME=${RESOURCES_URL##*/}
           DIR_NAME=${ZIP_NAME%.*}
           unzip $ZIP_NAME
           mv $DIR_NAME/*.onnx rapid_orientation/models/
-          python setup_orientation.py bdist_wheel ${{ github.ref_name }}
+          python setup.py bdist_wheel ${{ github.ref_name }}
 
       - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@v1.5.0
