@@ -42,6 +42,8 @@ setuptools.setup(
     name=MODULE_NAME,
     version=VERSION_NUM,
     platforms="Any",
+    long_description=get_readme(),
+    long_description_content_type="text/markdown",
     description="Tools for classifying the direction of images containing text based ONNXRuntime.",
     author="SWHL",
     author_email="liekkaskono@163.com",
