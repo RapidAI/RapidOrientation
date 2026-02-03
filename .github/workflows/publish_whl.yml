@@ -28,7 +28,7 @@ jobs:
           DIR_NAME=${ZIP_NAME%.*}
           unzip $ZIP_NAME
           rm rapid_orientation/models/.gitkeep
-          mv $DIR_NAME/*.onnx rapid_orientation/models/
+          mv $DIR_NAME/rapid_orientation.onnx rapid_orientation/models/
           pip install -r requirements.txt
           pip install pytest
           pytest tests/test_orientation.py
